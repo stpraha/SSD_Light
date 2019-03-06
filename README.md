@@ -11,7 +11,12 @@ Under development
 Fixed a bug: Attempting to use uninitialized value<br>
 Refactored loss_function, ssd_net and train_ssd
 
+2019/3/5
+Fixed a bug: with training loop goes on, the speed decreases.
+Rewrite ground_truth_process.py. It was changed from using Tensorflow to using Numpy.
+
 Next task:
+Check loss_function.py
 `nms` and `prediction`
 
 Sadness
