@@ -145,7 +145,7 @@ def one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index):
     return single_layer_localizations, single_layer_labels, single_layer_scores
 
       
-def all_layers_all_pictures_process(bboxes, labels, anchor_layers):
+def all_layers_all_pictures_process(bboxes, labels):
     """
         All anchor_layers, one batch pictures.
         Arguments:
@@ -157,10 +157,16 @@ def all_layers_all_pictures_process(bboxes, labels, anchor_layers):
             glabels: array, (batch_size x 8732) x 1
             gscores: array, (batch_size x 8732) x 1
     """
+    anchor_layers = generate_anchor.generate_anchor()
     all_localizations = []
     all_labels = []
     all_scores = []
     
+    #-------------------------------------------------------------------------------------
+    #Notice: glocalizations, glabels, gscores are ordered by LAYER, not picture.
+    #   The first dimension is layer. The second dimension is picture of batch.
+    #   Attention need to be paid when calculate loss.
+    #-------------------------------------------------------------------------------------
     for i, anchor_layer in enumerate(anchor_layers):
         single_layer_localizations, single_layer_labels, single_layer_scores = one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index = i)
 

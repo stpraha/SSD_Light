@@ -177,11 +177,11 @@ def ssd_net(inputs,
         #Two fully connected layers
         #Block 6:    #rate: 对于使用atrous convolution的膨胀率
         net = slim.conv2d(net, 1024, [3, 3], scope = 'conv6', padding = 'SAME')
-        net = tf.layers.dropout(net, rate = dropout_keep_prob, training = True)
+        net = tf.layers.dropout(net, rate = dropout_keep_prob, training = is_training)
         net6 = net
         #Block 7:
         net = slim.conv2d(net, 1024, [1, 1], scope = 'conv7', padding = 'SAME')
-        net = tf.layers.dropout(net, rate = dropout_keep_prob, training = True)
+        net = tf.layers.dropout(net, rate = dropout_keep_prob, training = is_training)
         net7 = net
         
         #Additional four layers
@@ -230,13 +230,18 @@ def ssd_net(inputs,
             cls_pred = slim.conv2d(layer, num_cls_pred, [3, 3], activation_fn = None)
             cls_pred = tf.reshape(cls_pred, cls_pred.get_shape().as_list()[: -1] + [num_anchor, num_classes])
             #print(cls_pred.shape.as_list(), 'cls_pred  shape')
-            cls_pred_final = slim.softmax(loc_pred)
+            cls_pred_final = slim.softmax(cls_pred)
             
             logits.append(cls_pred)
             localizations.append(loc_pred)
             predictions.append(cls_pred_final)
-        
+            
+#            print('cls_pred_final',cls_pred_final.shape)
+#            print('local_pred', loc_pred.shape)
+#            print('cls_pred', cls_pred.shape)
     #return net4, net7, net8, net9, net10, net11
+    #print(predictions.shape)
+    
     return predictions, logits, localizations
 
     

@@ -81,9 +81,7 @@ def get_optimizer(learning_rate, loss):
     return opt
 
 def train():
-
     print('now start training')
-    
     glabels, gscores, glocalizations, img_feature = get_input(batch_size)
     loss = get_loss(img_feature, glabels, gscores, glocalizations, batch_size = batch_size)
     opt = get_optimizer(learning_rate, loss)
@@ -91,8 +89,7 @@ def train():
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
-        #print(tf.global_variables())
-        #tf.train.Saver().save(sess, os.path.join('./save/', 'ckp'), global_step=1)
+
         saver = tf.train.Saver(max_to_keep = 5)
         epochs = 10
         for i in range(epochs):
@@ -102,8 +99,7 @@ def train():
             for j in range(150):
                 img, bboxes, labels = read_pic.read_pic_batch(batch_size, j)
                 
-                anchor_layers = generate_anchor.generate_anchor()
-                gtlocalizations, gtlabels, gtscores = process_ground_truth.all_layers_all_pictures_process(bboxes, labels, anchor_layers)
+                gtlocalizations, gtlabels, gtscores = process_ground_truth.all_layers_all_pictures_process(bboxes, labels)
 
                 _, iter_loss = sess.run([opt, loss], feed_dict = {img_feature : img, glabels : gtlabels, gscores : gtscores, glocalizations : gtlocalizations})
                 epoch_loss += iter_loss
@@ -111,7 +107,7 @@ def train():
                 if j%5 == 0:
                     print('Now epoch: ', i, ' round: ', j, ' iter_loss: ', iter_loss)
                     saver.save(sess, os.path.join('./save/', 'ckp'), global_step=j)
-                sess.graph.finalize()
+                #sess.graph.finalize()
             print('Epoch ', i, 'is finished. The loss is: ', epoch_loss / 78)
             #saver.save(sess, os.path.join('./save/', 'ckp'), global_step=i)
             
