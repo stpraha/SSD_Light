@@ -6,13 +6,18 @@ My code is strongly similar to his.
 
 Progress
 --------
-Under development
-2019/3/5
+Under development<br>
+2019/3/5<br>
 Fixed a bug: Attempting to use uninitialized value<br>
-Refactored loss_function, ssd_net and train_ssd
+Refactored loss_function, ssd_net and train_ssd<br>
 
-Next task:
-`nms` and `prediction`
+2019/3/5<br>
+Fixed a bug: with training loop goes on, the speed decreases.<br>
+Rewrite ground_truth_process.py. It was changed from using Tensorflow to using Numpy.<br>
+
+Next task:<br>
+Check loss_function.py<br>
+`nms` and `prediction`<br>
 
 Sadness
 -------
