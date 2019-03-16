@@ -22,6 +22,12 @@ Add test_ssd.py.<br>
 Add nms: encode_predictions.py.<br>
 Add picture saver: draw_pic.py.<br>
 
+2019/3/16<br>
+Fixed a bug: the loss doesn's decrease.<br>
+Found a bug in balancap's code. Submitted an Issue.<br>
+Build a new path.<br>
+Single class location and classification is abled.<br>
+
 Next task:<br>
 Train, test, adjust parameters<br>
 Then write a better picture saver.<br>
