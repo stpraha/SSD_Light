@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Mar  7 16:18:24 2019
-
 @author: Stpraha
 """
 
@@ -12,7 +11,7 @@ import read_pic
 import encode_predictions
 import draw_pic
 
-batch_size = 2
+batch_size = 1
 
 def get_input():
     img_feature = tf.placeholder(tf.float32, [batch_size, 300, 300, 3])
@@ -37,28 +36,23 @@ def test():
         print('ckpt valid')
         
     with tf.Session() as sess:
-        saver.restore(sess, ckpt)
-        img, bboxes, labels, raw_img, img_name = read_pic.read_pic_batch(batch_size, 0)
         sess.run(tf.global_variables_initializer())
-        pred_cls, pred_logits, pred_loc = sess.run([predictions, logits, localizations], feed_dict = {img_feature : img})
+        saver.restore(sess, ckpt)
+        img, raw_img, img_name = read_pic.read_test_pic(batch_size, 0)
 
-        batch_nms_locs, batch_nms_scores, batch_nms_labels = encode_predictions.batch_result_encode(pred_cls, pred_logits, pred_loc, batch_size)
+        pred_result, pred_logits, pred_loc = sess.run([predictions, logits, localizations], feed_dict = {img_feature : img})
+
+
+        print(np.reshape(pred_result[0], (-1)))
+        batch_nms_locs, batch_nms_scores, batch_nms_labels = encode_predictions.batch_result_encode(pred_result, pred_logits, pred_loc, batch_size)
+
+
+        print(batch_nms_locs[0].shape)
         
+        #print(np.reshape(batch_nms_labels, (-1)))
         draw_pic.draw_box_and_save(raw_img, img_name,  batch_nms_locs, batch_nms_labels)
         
         
 if __name__ == '__main__':
     with tf.Graph().as_default():
         test()
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        

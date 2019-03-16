@@ -5,28 +5,20 @@ Created on Wed Jan 23 19:10:19 2019
 @author: Stpraha
 """
 import tensorflow as tf
-import numpy as np
-import ssd_net
-import generate_anchor
 import loss_function
 import process_ground_truth
-import read_tfrecord
 import read_pic
-import datetime
 import os
-import pdb
+import encode_predictions
+import ssd_net
+import numpy as np
+import draw_pic
+import cv2
 
 slim = tf.contrib.slim
 
-learning_rate = 0.001
-batch_size = 2
 
-
-def flatten(
-            glabels,    #gt类别
-            glocalizations,  #gt位置
-            gscore,  #gt分数):
-            ):
+def flatten(glabels, glocalizations, gscore):
     #logits_shape = logits[0].shape
     #num_classes = logits_shape[4]
         
@@ -66,7 +58,7 @@ def get_input(batch_size):
     return glabels, gscores, glocalizations, img_feature
 
 
-def get_loss(img_feature, glabels, gscores, glocalizations, batch_size = batch_size):
+def get_loss(img_feature, glabels, gscores, glocalizations, batch_size):
     loss = loss_function.ssd_losses(img_feature, glabels, gscores, glocalizations, batch_size = batch_size)
     
     return loss
@@ -74,13 +66,31 @@ def get_loss(img_feature, glabels, gscores, glocalizations, batch_size = batch_s
 def get_optimizer(learning_rate, loss):
     train_vars = tf.global_variables()
     #print(train_vars)
-    loss_vars = [var for var in train_vars if var.name.startswith('ssd_net')]
+    ssd_vars = [var for var in train_vars if var.name.startswith('ssd_net')]
+    #print(ssd_vars)
     #with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-    opt = tf.train.AdamOptimizer(learning_rate).minimize(loss, var_list=train_vars)
+    opt = tf.train.AdamOptimizer(learning_rate).minimize(loss, var_list = ssd_vars)
     
     return opt
 
-def train():
+
+def draw(img, boxes):
+    img_file_name = './out/' + '0090' + '_ssd.jpg'
+    
+    for i in range(boxes.shape[0]):
+        box = boxes[i]
+        ymin = int(np.maximum(0, box[0] * 300))
+        xmin = int(np.maximum(0, box[1] * 300))
+        ymax = int(np.minimum(300, box[2] * 300))
+        xmax = int(np.minimum(300, box[3] * 300))
+
+        img = cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 1)
+     
+    cv2.imwrite(img_file_name, img)
+
+    
+
+def train(image_path, annotation_path, model_path, learning_rate = 0.001, batch_size = 1, epochs = 15000):
     print('now start training')
     glabels, gscores, glocalizations, img_feature = get_input(batch_size)
     loss = get_loss(img_feature, glabels, gscores, glocalizations, batch_size = batch_size)
@@ -91,27 +101,61 @@ def train():
         sess.run(tf.local_variables_initializer())
 
         saver = tf.train.Saver(max_to_keep = 5)
-        epochs = 10
         for i in range(epochs):
             iter_loss = 0
             batch_nums = 0
             epoch_loss = 0
-            for j in range(150):
-                img, bboxes, labels = read_pic.read_pic_batch(batch_size, j)
+            for j in range(1):
+                img, bboxes, labels, raw_img, img_name = read_pic.read_pic_batch(image_path, annotation_path, batch_size, j)
                 
                 gtlocalizations, gtlabels, gtscores = process_ground_truth.all_layers_all_pictures_process(bboxes, labels)
-
                 _, iter_loss = sess.run([opt, loss], feed_dict = {img_feature : img, glabels : gtlabels, gscores : gtscores, glocalizations : gtlocalizations})
                 epoch_loss += iter_loss
+                
+            
+            
+            if i % 10 == 0:
+                print('Epoch ', i, 'is finished. The loss is: ', iter_loss)
+                saver.save(sess, os.path.join('./save/', 'ckp'), global_step=i)
+                
+                pred_result, pred_logits, pred_loc, pred_softlogits = sess.run(ssd_net.ssd_net(img))
+                
+                boxes = []
+                labelss = []
+                logitss = []
+                softlogitss = []
+                for i in range(6):
+                    
+                    labels = np.reshape(pred_result[i], (-1))
+                    locs = np.reshape(pred_loc[i], (-1, 4))
+                    logits = np.reshape(pred_logits[i], (-1, 2))
+                    softlogits = np.reshape(pred_softlogits[i], (-1, 2))
+                    boxes.extend(locs)
+                    labelss.extend(labels)
+                    logitss.extend(logits)
+                    softlogitss.extend(softlogits)
+                
+                boxes = np.array(boxes)
+                labelss = np.array(labelss)
+                logitss = np.array(logitss)
+                softlogitss = np.array(softlogitss)
+                    
+                boxxxxx = []
+                for i in range(8732):
+                    if labelss[i] == 1:
+                        #print(i)
+                        #print(labelss[i], boxes[i], gtlocalizations[i], gtlabels[i], logitss[i], softlogitss[i])
+                        boxxxxx.append(boxes[i])
+                #draw(raw_img[0],  np.array(boxxxxx))
+                
+                #print(boxxxxx)
+                batch_nms_locs, batch_nms_scores, batch_nms_labels = encode_predictions.batch_result_encode(pred_result, pred_logits, pred_loc, batch_size)
 
-                if j%5 == 0:
-                    print('Now epoch: ', i, ' round: ', j, ' iter_loss: ', iter_loss)
-                    saver.save(sess, os.path.join('./save/', 'ckp'), global_step=j)
-                #sess.graph.finalize()
-            print('Epoch ', i, 'is finished. The loss is: ', epoch_loss / 78)
-            #saver.save(sess, os.path.join('./save/', 'ckp'), global_step=i)
+                #print(batch_nms_locs)
+                draw_pic.draw_box_and_save(raw_img, img_name,  batch_nms_locs, batch_nms_labels)
+            
             
 if __name__ == '__main__':
     with tf.Graph().as_default():
-        train()
+        train('F:\\VOC2007\\JPEGImages\\', 'F:\\VOC2007\\Annotations\\', 1)
     

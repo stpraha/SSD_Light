@@ -1,6 +1,10 @@
 import generate_anchor
 import read_pic
 import numpy as np
+import encode_predictions
+import cv2
+np.set_printoptions(threshold=np.inf) 
+
 
 def calculate_jaccard(ymin, xmin, ymax, xmax, single_bbox):
     """
@@ -81,7 +85,8 @@ def one_layer_one_picture_bboxes_process(anchor_layer, bbox, label, layer_index)
         single_label = label[i]
         jaccard = calculate_jaccard(ymin, xmin, ymax, xmax, single_bbox)
         
-        mask = np.greater(jaccard, feature_scores)
+        mask = np.logical_and(jaccard > 0.5, np.greater(jaccard, feature_scores))
+        #mask =  np.greater(jaccard, feature_scores)
         imask = mask.astype(int)
         fmask = mask.astype(float)
         
@@ -96,13 +101,14 @@ def one_layer_one_picture_bboxes_process(anchor_layer, bbox, label, layer_index)
     
     feature_ycenter = (feature_ymax + feature_ymin) / 2
     feature_xcenter = (feature_xmax + feature_xmin) / 2
-    feature_h = (feature_ymax - feature_ymin) / 2
-    feature_w = (feature_xmax - feature_xmin) / 2
+    feature_h = (feature_ymax - feature_ymin)
+    feature_w = (feature_xmax - feature_xmin)
     
     #---------------------------
-    #encode feature ?? Why ??
+    #
     #CAUTION!
     #---------------------------
+
     prior_scaling = [0.1, 0.1, 0.2, 0.2]
     feature_en_ycenter = (feature_ycenter - yref) / href / prior_scaling[0]
     feature_en_xcenter = (feature_xcenter - xref) / wref / prior_scaling[1]
@@ -115,7 +121,7 @@ def one_layer_one_picture_bboxes_process(anchor_layer, bbox, label, layer_index)
                                       feature_en_w])
     
     feature_localizations = np.transpose(feature_localizations, (1, 2, 3, 0))
-
+    
     return feature_localizations, feature_labels, feature_scores
 
 
@@ -137,7 +143,7 @@ def one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index):
     
     for i, bbox in enumerate(bboxes):
         single_picture_localizations, single_picture_labels, single_picture_scores = one_layer_one_picture_bboxes_process(anchor_layer, bboxes[i], labels[i], layer_index)
-        
+
         single_layer_localizations.append(single_picture_localizations)
         single_layer_labels.append(single_picture_labels)
         single_layer_scores.append(single_picture_scores)
@@ -167,17 +173,21 @@ def all_layers_all_pictures_process(bboxes, labels):
     #   The first dimension is layer. The second dimension is picture of batch.
     #   Attention need to be paid when calculate loss.
     #-------------------------------------------------------------------------------------
-    for i, anchor_layer in enumerate(anchor_layers):
+    for i, anchor_layer in enumerate(anchor_layers):    
         single_layer_localizations, single_layer_labels, single_layer_scores = one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index = i)
-
-        all_localizations.extend(single_layer_localizations)
-        all_labels.extend(single_layer_labels)
-        all_scores.extend(single_layer_scores)
+        
+#        if i == 5:
+#            r = single_layer_labels[0]
+#            r = r.sum(axis = 2)
+#            print(r)
+        all_localizations.append(single_layer_localizations)
+        all_labels.append(single_layer_labels)
+        all_scores.append(single_layer_scores)
     
     glocalizations = []
     glabels = []
     gscores = []
-    
+
     #flatten
     for i, localization in enumerate(all_localizations):
         flatten_localization = np.reshape(all_localizations[i], (-1, 4))
@@ -192,15 +202,12 @@ def all_layers_all_pictures_process(bboxes, labels):
     glabels = np.array(glabels, dtype = np.int32)
     gscores = np.array(gscores, dtype = np.float32)
 
+    #print(glabels.shape)
     return glocalizations, glabels, gscores
 
-
 def test():
-    img, bboxes, labels = read_pic.read_pic_batch(1, 0)
-    
-    anchor_layers = generate_anchor.generate_anchor()
-    glocalizations, glabels, gscores = all_layers_all_pictures_process(bboxes, labels, anchor_layers)
-    print('finish')
-    
-   
+    img, bboxes, labels, image_set, img_name_set = read_pic.read_pic_batch('F:\\VOC2007\\JPEGImages\\', 'F:\\VOC2007\\Annotations\\', 1, 0)
+    #print(bboxes)
+    glocalizations, glabels, gscores = all_layers_all_pictures_process(bboxes, labels)
+
 #test()
