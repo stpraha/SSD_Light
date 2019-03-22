@@ -7,13 +7,13 @@ Created on Mon Mar  4 10:32:11 2019
 
 import os
 import cv2
-import tensorflow as tf
 import xml.etree.ElementTree as ET
 import numpy as np
+import config
 #np.set_printoptions(threshold=np.inf) 
 
-annotations_path = 'F:\VOC2007\\Annotations\\'
-images_path = 'F:\VOC2007\\JPEGImages\\'
+#annotations_path = 'F:\VOC2007\\Annotations\\'
+#images_path = 'F:\VOC2007\\JPEGImages\\'
 
 voc_labels = {'none': (0, 'Background'), 'aeroplane': (1, 'Vehicle'),
               'bicycle': (2, 'Vehicle'), 'bird': (3, 'Animal'),
@@ -27,6 +27,10 @@ voc_labels = {'none': (0, 'Background'), 'aeroplane': (1, 'Vehicle'),
               'sofa': (18, 'Indoor'), 'train': (19, 'Vehicle'),
               'tvmonitor': (20, 'Indoor')}
 
+
+vocccc_labels = {'none': (0, 'Background'), 'normal': (1, 'Expression'),
+                 'happy': (2, 'Expression'), 'angry': (3, 'Expression')}
+
 def check_data(image_set, bboxes_set, labels_set):
     """
         Check if data is consistent with the format
@@ -39,7 +43,7 @@ def check_data(image_set, bboxes_set, labels_set):
         return False
     return True
 
-def read_pic_batch(batch_size, batch_num):
+def read_pic_batch(image_path, annotations_path, batch_size, batch_num):
     """
         Read pic data and label info from .jpg and .xml
         Argumengt:
@@ -60,13 +64,14 @@ def read_pic_batch(batch_size, batch_num):
         
         img_name_set.append(img_name)
         
-        img_file_name = images_path + img_name + '.jpg'
+        img_file_name = image_path + img_name + '.jpg'
+        
         img_data = cv2.imread(img_file_name)
         img_data = cv2.resize(img_data, (300, 300), interpolation=cv2.INTER_CUBIC)
 
         image_set.append(img_data)
         
-        print(img_file_name)
+        #print(img_file_name)
         #Read the xml
         xml_file_name = annotations_path + img_name + '.xml'
         #Turn xml to a tree
@@ -91,7 +96,7 @@ def read_pic_batch(batch_size, batch_num):
             #get label
             label = obj.find('name').text
             #trun label to number in 'voc_labels'
-            labels.append(int(voc_labels[label][0]))
+            labels.append(int(vocccc_labels[label][0]))
             labels_text.append(label.encode('ascii'))
                 
             bbox = obj.find('bndbox')
@@ -117,4 +122,29 @@ def read_pic_batch(batch_size, batch_num):
 
     return array_image_set, bboxes_set, labels_set, image_set, img_name_set
 
+
+def read_test_pic(image_path, batch_size, batch_num):
+    """
+        Read pic data from .jpg
+        Argumengt:
+            batch_size: size of batch
+            batch_num: which batch to read
+    """   
+    filenames = os.listdir(image_path)
+    
+    image_set = []
+    img_name_set = []
+
+    for i in range(batch_num*batch_size, batch_num*batch_size+batch_size):
+        filename = filenames[i]
+        img_name = filename[:-4] 
+        img_name_set.append(img_name)
+        img_file_name = image_path + img_name + '.jpg'
+        img_data = cv2.imread(img_file_name)
+        img_data = cv2.resize(img_data, (300, 300), interpolation=cv2.INTER_CUBIC)
+        image_set.append(img_data)
+        
+    array_image_set = np.array(image_set, dtype = 'float32')
+
+    return array_image_set, image_set, img_name_set
 

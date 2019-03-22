@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Mar  7 16:18:24 2019
-
 @author: Stpraha
 """
 
@@ -12,53 +11,43 @@ import read_pic
 import encode_predictions
 import draw_pic
 
-batch_size = 2
+class_num = 4
 
-def get_input():
+def get_input(batch_size):
     img_feature = tf.placeholder(tf.float32, [batch_size, 300, 300, 3])
     
     return img_feature
 
 
-def get_prediction(img_feature):
-    predictions, logits, localizations = ssd_net.ssd_net(img_feature, is_training = False)
+def get_prediction(img_feature, num_classes):
+    pred_result, pred_logits, pred_loc, pred_softlogits = ssd_net.ssd_net(img_feature,  num_classes, is_training = False)
     
-    return predictions, logits, localizations
+    return pred_result, pred_logits, pred_loc, pred_softlogits
 
     
-def test():
-    print('now start testing')
-    img_feature = get_input()
-    predictions, logits, localizations = get_prediction(img_feature)
+def test(image_path, out_path, model_path, batch_size = 1):
+    print('Start testing')
+    img_feature = get_input(batch_size)
+    pred_result, pred_logits, pred_loc, pred_softlogits = get_prediction(img_feature, num_classes = class_num)
     
     saver = tf.train.Saver()
-    ckpt = tf.train.latest_checkpoint('./save/')
+    ckpt = tf.train.latest_checkpoint(model_path)
     if ckpt:
-        print('ckpt valid')
+        print('Checkpoint is valid.')
+    if not ckpt:
+        print('Checkpoint is invalid, please check it.')
         
     with tf.Session() as sess:
-        saver.restore(sess, ckpt)
-        img, bboxes, labels, raw_img, img_name = read_pic.read_pic_batch(batch_size, 0)
         sess.run(tf.global_variables_initializer())
-        pred_cls, pred_logits, pred_loc = sess.run([predictions, logits, localizations], feed_dict = {img_feature : img})
-
-        batch_nms_locs, batch_nms_scores, batch_nms_labels = encode_predictions.batch_result_encode(pred_cls, pred_logits, pred_loc, batch_size)
-        
-        draw_pic.draw_box_and_save(raw_img, img_name,  batch_nms_locs, batch_nms_labels)
+        saver.restore(sess, ckpt)
+        img, raw_img, img_name = read_pic.read_test_pic(image_path, batch_size, 0)
+ 
+        result, logits, loc, softlogits = sess.run([pred_result, pred_logits, pred_loc, pred_softlogits], feed_dict = {img_feature : img})
+    
+        batch_nms_locs, batch_nms_scores, batch_nms_labels = encode_predictions.batch_result_encode(result, logits, loc, batch_size, num_classes = class_num)
+        draw_pic.draw_box_and_save(raw_img, img_name,  batch_nms_locs, batch_nms_labels, out_path)
         
         
 if __name__ == '__main__':
     with tf.Graph().as_default():
-        test()
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        test('/home/cxd/SSD_Light/demo/', '/home/cxd/SSD_Light/out/', './save/', batch_size = 32)

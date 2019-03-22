@@ -21,15 +21,16 @@ After:
 img_shape = (300, 300)
 #从ssd_net得到的六个feature的大小
 feature_shapes = [(38, 38), (19, 19), (10, 10), (5, 5), (3, 3), (1, 1)]
+#feature_shapes = [(37, 37), (18, 18), (9, 9), (5, 5), (3, 3), (1, 1)]
 #s_k的比例，论文里是0.2最小值，0.9最大值
-anchor_size_bounds = [0.20, 0.90]
+anchor_size_bounds = [0.10, 0.90]
 
-anchor_ratios = [[1, 2, 0.5],
-                 [1, 2, 0.5, 3, 1.0/3],
-                 [1, 2, 0.5, 3, 1.0/3],
-                 [1, 2, 0.5, 3, 1.0/3],
-                 [1, 2, 0.5],
-                 [1, 2, 0.5]]
+anchor_ratios = [[1, 2.0/3, 0.5],
+                 [1, 4.0/5, 2.0/5, 0.5, 2.0/3],
+                 [1, 4.0/5, 2.0/5, 0.5, 2.0/3],
+                 [1, 4.0/5, 2.0/5, 0.5, 2.0/3],
+                 [1, 2.0/3, 0.5],
+                 [1, 2.0/3, 0.5]]
 
 def generate_anchor(img_shape = img_shape,
                     feature_shapes = feature_shapes,
@@ -133,14 +134,14 @@ def generate_anchor_one_layer(anchor_size,
     
 
     
-def test():
+if __name__ == '__main__':
     result = generate_anchor()
     print(len(result))
     print(len(result[0]))
     print(result[0][0].shape)
     print(result[0][1].shape)
     
-#test()
+
 
 
 
