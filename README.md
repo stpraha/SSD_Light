@@ -2,8 +2,32 @@
 Reference
 ---------
 I refered `balancap's SSD` code. But his code is too heavy for me to understand. So I decided to write my own SSD code.<br>
-My code is strongly similar to his.
+My code is strongly similar to his.<br>
 
+Envs
+----
+`Python 3.6.8`<br>
+`tensorflow-gpu 1.4.0`<br>
+`tensorflow-tensorboard 0.4.0`<br>
+`CUDA Version 8.0.61`<br>
+`CUDNN Version 6.0.21`<br>
+
+Test
+----
+The test function is not well finished.<br>
+`python run.py --test --image_path /TEST_IMAGE_PATH`<br>
+`--model_path /YOU_MODEL_PATH --out_path /OUT_RESULT_PATH` and batch_size are also changeable<br>
+Look run.py and test_ssd.py for details.<br>
+
+Train
+-----
+`python run.py --train --image_path /TRAIN_IMAGE_PATH --annotation_path /TRAIN_ANNOTATION_PATH`<br>
+`--restore` is an optional that you can continue previous training.<br>
+batch_size, model_path, learning_rate, epochs are also caon be changed.<br>
+Look run.py and train_ssd.py for details<br>
+
+Example
+-------
 Progress
 --------
 Under development<br>
