@@ -6,11 +6,11 @@ My code is strongly similar to his.<br>
 
 Envs
 ----
-`Python 3.6.8`<br>
-`tensorflow-gpu 1.4.0`<br>
-`tensorflow-tensorboard 0.4.0`<br>
-`CUDA Version 8.0.61`<br>
-`CUDNN Version 6.0.21`<br>
+* `Python 3.6.8`<br>
+* `tensorflow-gpu 1.4.0`<br>
+* `tensorflow-tensorboard 0.4.0`<br>
+* `CUDA Version 8.0.61`<br>
+* `CUDNN Version 6.0.21`<br>
 
 Test
 ----
@@ -25,6 +25,7 @@ Train
 `--restore` is an optional that you can continue previous training.<br>
 batch_size, model_path, learning_rate, epochs are also caon be changed.<br>
 Look run.py and train_ssd.py for details<br>
+Your own data must be `VOC2007 like`. To change FDDB dataset to VOC like, you can see [my other project](https://github.com/stpraha/FDDB2VOClike).
 
 Example
 -------
