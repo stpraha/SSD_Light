@@ -28,9 +28,15 @@ Look run.py and train_ssd.py for details<br>
 
 Example
 -------
+![pic1](https://github.com/stpraha/SSD_Light/blob/master/examples/0000.jpg)
+![pic2](https://github.com/stpraha/SSD_Light/blob/master/examples/0001.jpg)
+
+
 Progress
 --------
 Under development<br>
+This project is almost finished at 2019/3/22.<br>
+
 2019/3/5<br>
 Fixed a bug: Attempting to use uninitialized value<br>
 Refactored loss_function, ssd_net and train_ssd<br>
@@ -52,10 +58,17 @@ Found a bug in balancap's code. Submitted an Issue.<br>
 Build a new path.<br>
 Single class location and classification is abled.<br>
 
+2019/3/22<br>
+A runnable version is published.<br>
+run.py was added.<br>
+Some functions wer rewrited.<br>
+Try to adjust parameters, but it doesnt work well.<br>
+
 Next task:<br>
 Train, test, adjust parameters<br>
 Then write a better picture saver.<br>
-Finally write run.py, config.conf<br>
+Write a config.conf
+
 
 Sadness
 -------
