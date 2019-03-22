@@ -14,8 +14,13 @@ import ssd_net
 import numpy as np
 import draw_pic
 import cv2
-
 slim = tf.contrib.slim
+
+sample_nums = 273
+positive_threshold = 0.5
+class_num = 4
+negative_ratio = 2  #not used yet
+loss_positive_threshold = 0.5   #not used yet
 
 
 def flatten(glabels, glocalizations, gscore):
@@ -57,9 +62,16 @@ def get_input(batch_size):
     
     return glabels, gscores, glocalizations, img_feature
 
-
 def get_loss(img_feature, glabels, gscores, glocalizations, batch_size):
-    loss = loss_function.ssd_losses(img_feature, glabels, gscores, glocalizations, batch_size = batch_size)
+    loss = loss_function.ssd_losses(img_feature, 
+                                    glabels, 
+                                    gscores, 
+                                    glocalizations, 
+                                    batch_size = batch_size, 
+                                    threshold = loss_positive_threshold,
+                                    negative_ratio = negative_ratio, 
+                                    num_classes = class_num
+                                   )
     
     return loss
     
@@ -90,8 +102,8 @@ def draw(img, boxes):
 
     
 
-def train(image_path, annotation_path, model_path, learning_rate = 0.001, batch_size = 1, epochs = 15000):
-    print('now start training')
+def train(image_path, annotation_path, model_path, learning_rate = 0.001, batch_size = 1, epochs = 150, restore = False):
+    print('Start training')
     glabels, gscores, glocalizations, img_feature = get_input(batch_size)
     loss = get_loss(img_feature, glabels, gscores, glocalizations, batch_size = batch_size)
     opt = get_optimizer(learning_rate, loss)
@@ -99,63 +111,73 @@ def train(image_path, annotation_path, model_path, learning_rate = 0.001, batch_
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
-
+        
         saver = tf.train.Saver(max_to_keep = 5)
-        for i in range(epochs):
+        step = 0
+        if restore:
+            print('Restoring.')
+            ckpt = tf.train.latest_checkpoint(model_path)
+            if ckpt:
+                print('Checkpoint is valid.')
+                step = int(ckpt.split('-')[1])
+                saver.restore(sess, ckpt)
+            if not ckpt:
+                print('Checkpoint is invalid, please check it or remove --restore.')
+                return
+        
+        for i in range(step, step + epochs):
             iter_loss = 0
-            batch_nums = 0
+            batch_nums = int(sample_nums / batch_size)
             epoch_loss = 0
-            for j in range(1):
+            for j in range(batch_nums):
                 img, bboxes, labels, raw_img, img_name = read_pic.read_pic_batch(image_path, annotation_path, batch_size, j)
                 
-                gtlocalizations, gtlabels, gtscores = process_ground_truth.all_layers_all_pictures_process(bboxes, labels)
+                gtlocalizations, gtlabels, gtscores = process_ground_truth.all_layers_all_pictures_process(bboxes, labels, positive_threshold = positive_threshold)
                 _, iter_loss = sess.run([opt, loss], feed_dict = {img_feature : img, glabels : gtlabels, gscores : gtscores, glocalizations : gtlocalizations})
                 epoch_loss += iter_loss
                 
-            
-            
-            if i % 10 == 0:
-                print('Epoch ', i, 'is finished. The loss is: ', iter_loss)
-                saver.save(sess, os.path.join('./save/', 'ckp'), global_step=i)
+            print('Epoch ', i, 'is finished. The loss is: ', epoch_loss / batch_nums)
+            saver.save(sess, os.path.join(model_path, 'ckp'), global_step = i)
                 
-                pred_result, pred_logits, pred_loc, pred_softlogits = sess.run(ssd_net.ssd_net(img))
+            #pred_result, pred_logits, pred_loc, pred_softlogits = sess.run(ssd_net.ssd_net(img))
                 
-                boxes = []
-                labelss = []
-                logitss = []
-                softlogitss = []
-                for i in range(6):
-                    
-                    labels = np.reshape(pred_result[i], (-1))
-                    locs = np.reshape(pred_loc[i], (-1, 4))
-                    logits = np.reshape(pred_logits[i], (-1, 2))
-                    softlogits = np.reshape(pred_softlogits[i], (-1, 2))
-                    boxes.extend(locs)
-                    labelss.extend(labels)
-                    logitss.extend(logits)
-                    softlogitss.extend(softlogits)
-                
-                boxes = np.array(boxes)
-                labelss = np.array(labelss)
-                logitss = np.array(logitss)
-                softlogitss = np.array(softlogitss)
-                    
-                boxxxxx = []
-                for i in range(8732):
-                    if labelss[i] == 1:
-                        #print(i)
-                        #print(labelss[i], boxes[i], gtlocalizations[i], gtlabels[i], logitss[i], softlogitss[i])
-                        boxxxxx.append(boxes[i])
-                #draw(raw_img[0],  np.array(boxxxxx))
-                
-                #print(boxxxxx)
-                batch_nms_locs, batch_nms_scores, batch_nms_labels = encode_predictions.batch_result_encode(pred_result, pred_logits, pred_loc, batch_size)
+            #batch_nms_locs, batch_nms_scores, batch_nms_labels = encode_predictions.batch_result_encode(pred_result, pred_logits, pred_loc, batch_size)
 
-                #print(batch_nms_locs)
-                draw_pic.draw_box_and_save(raw_img, img_name,  batch_nms_locs, batch_nms_labels)
+            #print(batch_nms_locs)
+            #draw_pic.draw_box_and_save(raw_img, img_name,  batch_nms_locs, batch_nms_labels)
             
             
 if __name__ == '__main__':
     with tf.Graph().as_default():
-        train('F:\\VOC2007\\JPEGImages\\', 'F:\\VOC2007\\Annotations\\', 1)
+        train('/home/cxd/FDDB2VOC/JPEGImages/', '/home/cxd/FDDB2VOC/Annotations/', './save/', batch_size = 32, restore = True)
     
+    
+    
+#                boxes = []
+#                labelss = []
+#                logitss = []
+#                softlogitss = []
+#                for i in range(6):
+#                    
+#                    labels = np.reshape(pred_result[i], (-1))
+#                    locs = np.reshape(pred_loc[i], (-1, 4))
+#                    logits = np.reshape(pred_logits[i], (-1, 2))
+#                    softlogits = np.reshape(pred_softlogits[i], (-1, 2))
+#                    boxes.extend(locs)
+#                    labelss.extend(labels)
+#                    logitss.extend(logits)
+#                    softlogitss.extend(softlogits)
+#                
+#                boxes = np.array(boxes)
+#                labelss = np.array(labelss)
+#                logitss = np.array(logitss)
+#                softlogitss = np.array(softlogitss)
+#                    
+#                boxxxxx = []
+#                for i in range(8732):
+#                    if labelss[i] == 1:
+#                        #print(labelss[i], boxes[i], gtlocalizations[i], gtlabels[i], logitss[i], softlogitss[i])
+#                        boxxxxx.append(boxes[i])
+#                #draw(raw_img[0],  np.array(boxxxxx))
+#                
+#                #print(boxxxxx)

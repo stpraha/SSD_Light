@@ -51,10 +51,10 @@ def ssd_losses(img_feature,
                concat_gscores, 
                concat_glocalizations, 
                batch_size,
-               threshold = 0.5,  #阈值
+               threshold,  #阈值
+               negative_ratio,  #正负样本size比
+               num_classes,
                alpha = 1,    #d
-               negative_ratio = 2,  #正负样本size比
-               num_classes = 2,
                scope = 'ssd_losses'
                ):
     """
@@ -67,7 +67,7 @@ def ssd_losses(img_feature,
     confidence loss: Softmax loss over multiple classes confidences (c).
     
     """
-    predictions, logits, localizations, softlogits = ssd_net.ssd_net(img_feature)
+    predictions, logits, localizations, softlogits = ssd_net.ssd_net(img_feature, num_classes = num_classes)
     #print(concat_glabels)
     with tf.name_scope(scope):
         #-----------------------------------------------------------------------------------------------------

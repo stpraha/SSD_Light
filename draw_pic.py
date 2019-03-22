@@ -6,7 +6,7 @@ Created on Fri Mar  8 17:21:41 2019
 import cv2
 import numpy as np
 
-voc_labels_reverse = {0: ('none', 'Background'), 3: ('aeroplane', 'Vehicle'),
+vocc_labels_reverse = {0: ('none', 'Background'), 3: ('aeroplane', 'Vehicle'),
               2: ('bicycle', 'Vehicle'), 1: ('bird', 'Animal'),
               4: ('boat', 'Vehicle'), 5: ('bottle', 'Indoor'),
               6: ('bus', 'Vehicle'), 7: ('car', 'Vehicle'),
@@ -18,10 +18,12 @@ voc_labels_reverse = {0: ('none', 'Background'), 3: ('aeroplane', 'Vehicle'),
               18: ('sofa', 'Indoor'), 19: ('train', 'Vehicle'),
               20: ('tvmonitor', 'Indoor')}
 
-out_path = './out/'
+voc_labels_reverse = {0: ('none', 'Background'), 1: ('normal', 'Expression'),
+                      2: ('happy', 'Expression'), 3: ('angry', 'Expression')}
 
-def draw_single_pic(img, img_name, boxes, labels, pic):
-    print('draw!!!!')
+
+def draw_single_pic(img, img_name, boxes, labels, pic, out_path):
+    
     img_file_name = out_path + img_name + '_ssd.jpg'
     
     for i in range(len(boxes)):
@@ -48,14 +50,14 @@ def draw_single_pic(img, img_name, boxes, labels, pic):
         else:
             img = cv2.putText(img, label, (xmin, ymax + 4), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 255, 0), 1)
     
-        
     cv2.imwrite(img_file_name, img)
 
 
-def draw_box_and_save(batch_img, img_name, batch_boxes, batch_labels):
+def draw_box_and_save(batch_img, img_name, batch_boxes, batch_labels, out_path):
+    print('draw!!!!')
     for i in range(len(batch_img)):
         #print('boxes shape', batch_boxes[i].shape)
-        draw_single_pic(batch_img[i], img_name[i], batch_boxes[i], batch_labels[i], i)
+        draw_single_pic(batch_img[i], img_name[i], batch_boxes[i], batch_labels[i], i, out_path)
         
         
         

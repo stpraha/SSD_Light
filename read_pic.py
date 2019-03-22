@@ -9,6 +9,7 @@ import os
 import cv2
 import xml.etree.ElementTree as ET
 import numpy as np
+import config
 #np.set_printoptions(threshold=np.inf) 
 
 #annotations_path = 'F:\VOC2007\\Annotations\\'
@@ -27,17 +28,8 @@ voc_labels = {'none': (0, 'Background'), 'aeroplane': (1, 'Vehicle'),
               'tvmonitor': (20, 'Indoor')}
 
 
-vocccc_labels = {'none': (0, 'Background'), 'aeroplane': (1, 'Vehicle'),
-              'bicycle': (1, 'Vehicle'), 'bird': (1, 'Animal'),
-              'boat': (1, 'Vehicle'), 'bottle': (1, 'Indoor'),
-              'bus': (1, 'Vehicle'), 'car': (1, 'Vehicle'),
-              'cat': (1, 'Animal'), 'chair': (1, 'Indoor'),
-              'cow': (1, 'Animal'), 'diningtable': (1, 'Indoor'),
-              'dog': (1, 'Animal'), 'horse': (1, 'Animal'),
-              'motorbike': (1, 'Vehicle'), 'person': (1, 'Person'),
-              'pottedplant': (1, 'Indoor'), 'sheep': (1, 'Animal'),
-              'sofa': (1, 'Indoor'), 'train': (1, 'Vehicle'),
-              'tvmonitor': (1, 'Indoor')}
+vocccc_labels = {'none': (0, 'Background'), 'normal': (1, 'Expression'),
+                 'happy': (2, 'Expression'), 'angry': (3, 'Expression')}
 
 def check_data(image_set, bboxes_set, labels_set):
     """
@@ -73,12 +65,13 @@ def read_pic_batch(image_path, annotations_path, batch_size, batch_num):
         img_name_set.append(img_name)
         
         img_file_name = image_path + img_name + '.jpg'
+        
         img_data = cv2.imread(img_file_name)
         img_data = cv2.resize(img_data, (300, 300), interpolation=cv2.INTER_CUBIC)
 
         image_set.append(img_data)
         
-        print(img_file_name)
+        #print(img_file_name)
         #Read the xml
         xml_file_name = annotations_path + img_name + '.xml'
         #Turn xml to a tree
@@ -130,31 +123,27 @@ def read_pic_batch(image_path, annotations_path, batch_size, batch_num):
     return array_image_set, bboxes_set, labels_set, image_set, img_name_set
 
 
-def read_test_pic(batch_size, batch_num):
+def read_test_pic(image_path, batch_size, batch_num):
     """
         Read pic data from .jpg
         Argumengt:
             batch_size: size of batch
             batch_num: which batch to read
     """   
-    image_path = 'F:\\VOC2007\\JPEGImages\\'
     filenames = os.listdir(image_path)
     
     image_set = []
     img_name_set = []
-    
+
     for i in range(batch_num*batch_size, batch_num*batch_size+batch_size):
-        img_name = filenames[i]
-        
-        img_name_set.append(img_name.split(',')[0])
-        
-        img_file_name = image_path + img_name
-        print(img_file_name)
+        filename = filenames[i]
+        img_name = filename[:-4] 
+        img_name_set.append(img_name)
+        img_file_name = image_path + img_name + '.jpg'
         img_data = cv2.imread(img_file_name)
         img_data = cv2.resize(img_data, (300, 300), interpolation=cv2.INTER_CUBIC)
-
         image_set.append(img_data)
-              
+        
     array_image_set = np.array(image_set, dtype = 'float32')
 
     return array_image_set, image_set, img_name_set

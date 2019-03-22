@@ -9,7 +9,10 @@ import test_ssd
 import generate_anchor
 np.set_printoptions(threshold = np.inf)
 
-def flatten(pred_cls, pred_logits, pred_loc, batch_size, num_classes = 2):
+
+nms_threshold = 0.3
+
+def flatten(pred_cls, pred_logits, pred_loc, batch_size, num_classes):
     """
     Arguments:
         pred_...: 6 x batch_size x ? x ? x ?
@@ -110,16 +113,14 @@ def single_label_nms(single_dets, nms_threshold):
     single_dets_sort = single_dets_sort[::-1]
     single_dets = single_dets[single_dets_sort]
     
-
-
     box_keep = []
     
     vols = np.maximum((single_dets[:, 2] - single_dets[:, 0]), 0) * np.maximum((single_dets[:, 3] - single_dets[:, 1]), 0)
     single_dets = single_dets[np.where(vols > 0)[0]]
         
-    for i in range(single_dets.shape[0]):
-        if(single_dets[i][5]):
-            print('ooooo', single_dets)
+#    for i in range(single_dets.shape[0]):
+#        if(single_dets[i][5]):
+#            print('ooooo', single_dets)
     
     while single_dets.shape[0] > 0:
         ymin = single_dets[:, 0]
@@ -159,7 +160,7 @@ def single_label_nms(single_dets, nms_threshold):
 
     return box_keep
 
-def nms(loc, scores, labels, nms_threshold = 0.3):
+def nms(loc, scores, labels, nms_threshold = nms_threshold):
     """
         Arguments:
             loc: 8732 x 4, ymin, xmin, ymax, xmax, one picture
@@ -199,7 +200,7 @@ def nms(loc, scores, labels, nms_threshold = 0.3):
     return nms_locs, nms_scores, nms_labels 
 
 
-def batch_result_encode(pred_cls, pred_logits, pred_loc, batch_size, num_classes = 2):
+def batch_result_encode(pred_cls, pred_logits, pred_loc, batch_size, num_classes):
     """
         1. decode loc. from --> encoded(y_center, x_center, h, w) --> decoded(ymin, xmin, ymax, xmax)
         2. Adjust its order. from by anchor_layers --> to by pictures.

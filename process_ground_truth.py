@@ -41,7 +41,7 @@ def calculate_jaccard(ymin, xmin, ymax, xmax, single_bbox):
     return jaccard
 
 
-def one_layer_one_picture_bboxes_process(anchor_layer, bbox, label, layer_index):
+def one_layer_one_picture_bboxes_process(anchor_layer, bbox, label, layer_index, positive_threshold):
     """
         Each layer(one of 6 anchor_layer), one picture's bboxes.
         Arguments:
@@ -85,7 +85,7 @@ def one_layer_one_picture_bboxes_process(anchor_layer, bbox, label, layer_index)
         single_label = label[i]
         jaccard = calculate_jaccard(ymin, xmin, ymax, xmax, single_bbox)
         
-        mask = np.logical_and(jaccard > 0.5, np.greater(jaccard, feature_scores))
+        mask = np.logical_and(jaccard > positive_threshold, np.greater(jaccard, feature_scores))
         #mask =  np.greater(jaccard, feature_scores)
         imask = mask.astype(int)
         fmask = mask.astype(float)
@@ -125,7 +125,7 @@ def one_layer_one_picture_bboxes_process(anchor_layer, bbox, label, layer_index)
     return feature_localizations, feature_labels, feature_scores
 
 
-def one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index):
+def one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index, positive_threshold):
     """
         Each layer(one of 6 anchor_layer), one batch pictures.
         Arguments:
@@ -142,7 +142,7 @@ def one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index):
     single_layer_scores = []
     
     for i, bbox in enumerate(bboxes):
-        single_picture_localizations, single_picture_labels, single_picture_scores = one_layer_one_picture_bboxes_process(anchor_layer, bboxes[i], labels[i], layer_index)
+        single_picture_localizations, single_picture_labels, single_picture_scores = one_layer_one_picture_bboxes_process(anchor_layer, bboxes[i], labels[i], layer_index, positive_threshold)
 
         single_layer_localizations.append(single_picture_localizations)
         single_layer_labels.append(single_picture_labels)
@@ -151,7 +151,7 @@ def one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index):
     return single_layer_localizations, single_layer_labels, single_layer_scores
 
       
-def all_layers_all_pictures_process(bboxes, labels):
+def all_layers_all_pictures_process(bboxes, labels, positive_threshold):
     """
         All anchor_layers, one batch pictures.
         Arguments:
@@ -174,7 +174,7 @@ def all_layers_all_pictures_process(bboxes, labels):
     #   Attention need to be paid when calculate loss.
     #-------------------------------------------------------------------------------------
     for i, anchor_layer in enumerate(anchor_layers):    
-        single_layer_localizations, single_layer_labels, single_layer_scores = one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index = i)
+        single_layer_localizations, single_layer_labels, single_layer_scores = one_layer_all_pictures_process(anchor_layer, bboxes, labels, layer_index = i, positive_threshold = positive_threshold)
         
 #        if i == 5:
 #            r = single_layer_labels[0]
@@ -210,4 +210,5 @@ def test():
     #print(bboxes)
     glocalizations, glabels, gscores = all_layers_all_pictures_process(bboxes, labels)
 
-#test()
+if __name__ == '__main__':
+    test()

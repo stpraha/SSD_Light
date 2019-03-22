@@ -21,6 +21,7 @@ anchor_ratios=[[2, .5],
                [2, .5],
                [2, .5]]
 
+drop_out_keep_prob = 0.7
 
 def l2_normalization(layer, scale, trainable = True):
     with tf.variable_scope('l2_norm', reuse = tf.AUTO_REUSE):
@@ -40,7 +41,7 @@ def pad2d(inputs, pad = (0, 0), mode = 'CONSTANT', trainable = True, scope = Non
 
 
 def ssd_get_prediction(layers,
-                       num_classes = 21,
+                       num_classes,
                        sizes = anchor_sizes,
                        ratios = anchor_ratios):
     """
@@ -97,7 +98,7 @@ def ssd_get_prediction(layers,
     
     
 
-def get_pred_loc_cls(feature_map, i, scope,  cls_num = 2):
+def get_pred_loc_cls(feature_map, i, scope,  cls_num):
     
     num_anchor = len(anchor_sizes[i]) + len(anchor_ratios[i])
     num_loc_pred = num_anchor * 4
@@ -118,9 +119,9 @@ def get_pred_loc_cls(feature_map, i, scope,  cls_num = 2):
        
 
 def ssd_net(inputs,
-            dropout_keep_prob = 0.7,
+            num_classes,
+            dropout_keep_prob = drop_out_keep_prob,
             is_training = True,
-            num_classes = 2,
             sizes = anchor_sizes,
             ratios = anchor_ratios,
             scope = 'ssd_net'):
@@ -195,7 +196,7 @@ def ssd_net(inputs,
             if i == 0:
                 layer = l2_normalization(layer, 20)
                 
-            pred_cls, pred_loc = get_pred_loc_cls(layer, i, scope = scope + 'conv_' + str(i))
+            pred_cls, pred_loc = get_pred_loc_cls(layer, i, scope = scope + 'conv_' + str(i), cls_num = num_classes)
             #print(pred_cls.shape)
             pred_softlogit = tf.nn.softmax(pred_cls)
             pred_result = tf.arg_max(tf.nn.softmax(pred_cls), 4)
@@ -215,7 +216,9 @@ def test_ssd_net():
 
     return predictions, logits, localizations
 
-#test_ssd_net()
+if __name__ == '__main__':
+    with tf.Graph().as_default():
+        test_ssd_net()
 
 
 
