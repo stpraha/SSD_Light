@@ -1,6 +1,6 @@
 # SSD_Light
 
-#ATTENTION! I'm sorry that this project is not able to used directly yet! You should read the code and modify it before use! I will finish it if hava enough time.
+# ATTENTION! I'm sorry that this project is not able to used directly yet! You should read the code and modify it before use! I will finish it if hava enough time.
 
 Reference
 ---------
