@@ -1,4 +1,7 @@
 # SSD_Light
+
+#ATTENTION! I'm sorry that this project is not able to used directly yet! You should read the code and modify it before use! I will finish it if hava enough time.
+
 Reference
 ---------
 I refered `balancap's SSD` code. But his code is too heavy for me to understand. So I decided to write my own SSD code.<br>
