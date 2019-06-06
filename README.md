@@ -69,9 +69,7 @@ Some functions wer rewrited.<br>
 Try to adjust parameters, but it doesnt work well.<br>
 
 Next task:<br>
-Train, test, adjust parameters<br>
-Then write a better picture saver.<br>
-Write a config.conf
+Make 
 
 
 Sadness
